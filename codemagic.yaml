@@ -1,0 +1,57 @@
+workflows:
+  ci:
+    name: CI
+    instance_type: mac_mini
+    # Setting the timeout for a build to 15 minutes.
+    max_build_duration: 15
+    environment:
+      # Using the latest Flutter version.
+      flutter: stable
+    when:
+      changeset:
+        includes:
+          # Only run the CI when a file in one of the following directories
+          # changed.
+          - "apps/**"
+          - "packages/**"
+          - "codemagic.yaml"
+        excludes:
+          # Don't run the CI when only .md files changed.
+          - "**/*.md"
+    # This workflow should trigger when a new pull request opens or updates.
+    triggering:
+      events:
+        - pull_request
+    scripts:
+      - name: Add Dart SDK to PATH
+        script: |
+          echo PATH="$PATH":"$FLUTTER_ROOT/.pub-cache/bin" >> $CM_ENV
+          echo PATH="$PATH":"$FLUTTER_ROOT/bin" >> $CM_ENV
+      - name: Melos Bootstrap
+        script: |
+          dart pub global activate melos
+          melos bootstrap
+      - name: Run Analyze
+        script: melos run analyze
+
+      - name: Run Format
+        script: melos run format
+
+      - name: Run Tests
+        script: |
+          melos run test
+          
+          # Upload results of failed golden tests if test command failed.
+          if [ $? -ne 0 ]; then
+            # Finds all "failures" folders and copies them to the export
+            # directory. Therefore, we are able to view the results of the
+            # failed golden tests.
+            #
+            # The command will use the exit code 0 (success) even when there are
+            # no failures folders.
+            find * -path '**/failures' -execdir bash -c "cp -r failures $FCI_EXPORT_DIR" \;
+            
+            # Because we caught the exit code of the test command, we need to
+            # set manually again.
+            exit 1
+          fi
