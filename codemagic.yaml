@@ -3,6 +3,7 @@ definitions:
     groups:
       - ios
       - android
+      - firebase
   scripts:
     - &ios_initialize_keychain
       name: Set up keychain to be used for codesigning using Codemagic CLI 'keychain' command
