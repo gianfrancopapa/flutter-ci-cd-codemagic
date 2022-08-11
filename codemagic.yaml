@@ -1,7 +1,72 @@
+definitions:
+  environment:
+    groups:
+      - ios
+      - android
+  scripts:
+    - &ios_initialize_keychain
+      name: Set up keychain to be used for codesigning using Codemagic CLI 'keychain' command
+      script: |
+        keychain initialize
+    - &ios_automatic_fetch_adhoc
+      name: Fetch signing files
+      script: |
+        app-store-connect fetch-signing-files $BUNDLE_ID --type IOS_APP_ADHOC --create
+    - &ios_automatic_fetch
+      name: Fetch signing files
+      script: |
+        app-store-connect fetch-signing-files $BUNDLE_ID --type IOS_APP_STORE --create
+    - &ios_use_default_keychain
+      name: Use system default keychain
+      script: |
+        keychain add-certificates
+    - &ios_set_signing_to_xcode
+      name: Set up code signing settings on Xcode project
+      script: |
+        xcode-project use-profiles
+    - &ios_flutter_build_dev
+      name: Build ipa for distribution
+      script: |
+        flutter build ios --target=lib/main.dart
+        cd ios
+        xcode-project build-ipa --workspace "$XCODE_WORKSPACE"
+    - &android_set_key_properties
+      name: Set up key properties
+      script: |
+        echo $FCI_KEYSTORE | base64 --decode > $FCI_KEYSTORE_PATH
+        cat >> "$FCI_BUILD_DIR/android/key.properties" <<EOF
+        storePassword=$FCI_KEYSTORE_PASSWORD
+        keyPassword=$FCI_KEY_PASSWORD
+        keyAlias=$FCI_KEY_ALIAS
+        storeFile=$FCI_KEYSTORE_PATH
+        EOF
+    - &android_set_local_properties
+      name: Set up local.properties
+      script: |
+        echo "flutter.sdk=$HOME/programs/flutter" > "$FCI_BUILD_DIR/android/local.properties"
+    - &android_flutter_build_dev
+      name: Build apk for distribution
+      script: |
+        flutter pub get
+        flutter build apk --release --target=lib/main.dart
+  publishing:
+    - &firebase_app_distribution_ios
+      firebase:
+        firebase_token: $FIREBASE_TOKEN
+        ios:
+          app_id: $FIREBASE_IOS_APP_ID
+          groups: 
+            - iOS
+    - &firebase_app_distribution_android
+      firebase:
+        firebase_token: $FIREBASE_TOKEN
+        android:
+          app_id: $FIREBASE_ANDROID_APP_ID
+          groups: 
+            - android    
 workflows:
   ci:
     name: CI
-    instance_type: mac_mini
     # Setting the timeout for a build to 15 minutes.
     max_build_duration: 15
     environment:
@@ -55,3 +120,62 @@ workflows:
             # set manually again.
             exit 1
           fi
+  
+  ios-build-firebase:
+    name: ios-build-firebase
+    max_build_duration: 60
+    environment:
+      groups:
+        - firebase
+        - ios
+      vars:
+        XCODE_WORKSPACE: "Runner.xcworkspace"
+        xcode: latest
+        cocoapods: default
+      flutter: latest
+      cocoapods: default
+    triggering:
+      events:
+        - tag
+      branch_patterns:
+        - pattern: "develop"
+          include: true
+          source: true
+    scripts:
+      - *ios_initialize_keychain
+      - *ios_automatic_fetch_adhoc
+      - *ios_use_default_keychain
+      - *ios_set_signing_to_xcode
+      - *ios_flutter_build_dev
+    artifacts:
+      - *ipa
+      - *dsym
+    #publishing: *firebase_app_distribution_ios
+
+  android-build-firebase:
+    name: android-build-firebase
+    max_build_duration: 60
+    environment:
+      groups:
+        - firebase
+        - android
+      flutter: latest
+    cache:
+      cache_paths:
+        - $FLUTTER_ROOT/.pub-cache
+        - $HOME/.gradle/caches
+    triggering:
+      events:
+        - tag
+      branch_patterns:
+        - pattern: "develop"
+          include: true
+          source: true
+    scripts:
+      - *android_set_key_properties
+      - *android_set_local_properties
+      - *android_flutter_build_dev
+    artifacts:
+      - *apk
+      - *aab
+    publishing: *firebase_app_distribution_android
