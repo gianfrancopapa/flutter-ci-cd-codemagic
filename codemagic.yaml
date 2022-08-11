@@ -28,7 +28,7 @@ definitions:
     - &ios_flutter_build_dev
       name: Build ipa for distribution
       script: |
-        cd frontend
+        cd apps/frontend
         flutter build ios --target=lib/main.dart
         cd ios
         xcode-project build-ipa --workspace "$XCODE_WORKSPACE"
