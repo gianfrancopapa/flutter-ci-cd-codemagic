@@ -132,7 +132,7 @@ workflows:
         XCODE_WORKSPACE: "Runner.xcworkspace"
         xcode: latest
         cocoapods: default
-      flutter: latest
+      flutter: stable
       cocoapods: default
     triggering:
       events:
