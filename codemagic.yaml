@@ -59,13 +59,6 @@ definitions:
           app_id: $FIREBASE_IOS_APP_ID
           groups: 
             - iOS
-    - &firebase_app_distribution_android
-      firebase:
-        firebase_token: $FIREBASE_TOKEN
-        android:
-          app_id: $FIREBASE_ANDROID_APP_ID
-          groups: 
-            - android
   artifacts:
     - &ipa ios/build/ios/ipa/*.ipa
     - &dsym $HOME/Library/Developer/Xcode/DerivedData/**/Build/**/*.dSYM
@@ -158,31 +151,3 @@ workflows:
       - *ipa
       - *dsym
     #publishing: *firebase_app_distribution_ios
-
-  android-build-firebase:
-    name: android-build-firebase
-    max_build_duration: 60
-    environment:
-      groups:
-        - firebase
-        - android
-      flutter: latest
-    cache:
-      cache_paths:
-        - $FLUTTER_ROOT/.pub-cache
-        - $HOME/.gradle/caches
-    triggering:
-      events:
-        - tag
-      branch_patterns:
-        - pattern: "develop"
-          include: true
-          source: true
-    scripts:
-      - *android_set_key_properties
-      - *android_set_local_properties
-      - *android_flutter_build_dev
-    artifacts:
-      - *apk
-      - *aab
-    publishing: *firebase_app_distribution_android
