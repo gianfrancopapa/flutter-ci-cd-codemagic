@@ -137,6 +137,10 @@ workflows:
     triggering:
       events:
         - tag
+      branch_patterns:
+        - pattern: "main"
+          include: true
+          source: true
     scripts:
       - *ios_initialize_keychain
       - *ios_automatic_fetch_adhoc
