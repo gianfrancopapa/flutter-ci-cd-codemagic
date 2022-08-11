@@ -64,7 +64,12 @@ definitions:
         android:
           app_id: $FIREBASE_ANDROID_APP_ID
           groups: 
-            - android    
+            - android
+  artifacts:
+    - &ipa ios/build/ios/ipa/*.ipa
+    - &dsym $HOME/Library/Developer/Xcode/DerivedData/**/Build/**/*.dSYM
+    - &apk build/**/outputs/**/*.apk
+    - &aab build/**/outputs/**/*.aab
 workflows:
   ci:
     name: CI
