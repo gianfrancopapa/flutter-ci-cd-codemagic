@@ -68,10 +68,10 @@ definitions:
           groups:
             - android
   artifacts:
-    - &ipa ios/build/ios/ipa/*.ipa
+    - &ipa apps/frontend/ios/build/ios/ipa/*.ipa
     - &dsym $HOME/Library/Developer/Xcode/DerivedData/**/Build/**/*.dSYM
-    - &apk build/**/outputs/**/*.apk
-    - &aab build/**/outputs/**/*.aab
+    - &apk apps/frontend/build/**/outputs/**/*.apk
+    - &aab apps/frontend/build/**/outputs/**/*.aab
 workflows:
   ci:
     name: CI
@@ -159,8 +159,8 @@ workflows:
       - *ipa
       - *dsym
     #publishing: *firebase_app_distribution_ios
-  android-dev-firebase:
-    name: android-dev-firebase
+  android-build-firebase:
+    name: android-build-firebase
     max_build_duration: 60
     environment:
       groups:
