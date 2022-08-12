@@ -36,7 +36,7 @@ definitions:
       name: Set up key properties
       script: |
         echo $FCI_KEYSTORE | base64 --decode > $FCI_KEYSTORE_PATH
-        cat >> "$FCI_BUILD_DIR/android/key.properties" <<EOF
+        cat >> "$FCI_BUILD_DIR/apps/frontend/android/key.properties" <<EOF
         storePassword=$FCI_KEYSTORE_PASSWORD
         keyPassword=$FCI_KEY_PASSWORD
         keyAlias=$FCI_KEY_ALIAS
@@ -45,7 +45,7 @@ definitions:
     - &android_set_local_properties
       name: Set up local.properties
       script: |
-        echo "flutter.sdk=$HOME/programs/flutter" > "$FCI_BUILD_DIR/android/local.properties"
+        echo "flutter.sdk=$HOME/programs/flutter" > "$FCI_BUILD_DIR/apps/frontend/android/local.properties"
     - &android_flutter_build_dev
       name: Build apk for distribution
       script: |
